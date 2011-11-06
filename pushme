@@ -1,0 +1,84 @@
+#!/bin/bash
+#
+# Easy forwarding of commandline output to prowl service
+# for viewing on iPhone. (http://prowl.weks.net/)
+#
+# By Raymond Kuiper (qix at the-wired dot net)
+#
+# Licence:      GPLv3  (http://www.gnu.org/licenses/gpl.html)
+#
+
+#
+# Set version number for internal reference.
+#
+ver=1.01
+
+#
+# Define pushme settings
+#
+show=tail
+numlines=10
+
+#
+# Prowl settings
+#
+apikey=INSERT_API_KEY_HERE #Get this from your Prowl account
+appname=`hostname`   #Use hostname for example
+event="Shell command output"
+prio=0
+
+#
+# See if we've got any arguments passed
+#
+args=`echo $@ | sed 's/^-.//'`
+option="$1"
+
+if [ "$option" == "-H" ]; then
+	show=head
+fi
+
+if [ "$option" == "-T" ]; then
+        show=tail
+fi
+
+if [ "$option" == "-h" ]; then
+               cat<<EOF
+pushme   -   Easy forwarding of commandline output to prowl service
+	     for viewing on iPhone. (http://prowl.weks.net/)
+
+             Any argument (except for the options) is passed to prowl
+             as the message body. If no arguments are specified,
+             stdin in used.
+
+Version $ver
+By Raymond Kuiper (qix at the-wired.net)
+
+Usage (only one option at a time):
+        -h                      Show this help text (Can be the only argument)
+        -T                      Truncate at tail (used for pipe)
+        -H                      Truncate at head (used for pipe)
+
+
+EOF
+                exit 0
+fi
+
+
+if [ "$args" == "" ]; then
+	args=`cat | $show -n $numlines`
+fi
+count=`echo $args | wc -c`
+if [ $count -ge 2 ]; then
+
+	#
+	# run prowl :-)
+	#
+	prowl.pl -apikey=$apikey -application="$appname" -event="$event" -priority=$prio -notification="$args"
+else
+
+        echo 'Nothing to do, exit.' >&2
+	exit 1
+fi
+
+
+
